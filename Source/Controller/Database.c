@@ -4,11 +4,26 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <fnmatch.h>
+#include <stdlib.h>
 
 static int lockFD = 0;
 static sqlite3* db = NULL;
 
 extern const char* cduck_db_schema;
+
+#define DB_MAX_GROUP_COUNT 2048
+
+static char* __db_groups[2048];
+
+static void initgroups ()
+{
+	int i;
+	for (i = 0; i < DB_MAX_GROUP_COUNT; i++)
+	{
+		__db_groups[i] = malloc(16);
+	}
+}
 
 static void srcdie ()
 {
@@ -43,6 +58,7 @@ void cduck_db_open ()
 	{
 		initdb();
 	}
+	initgroups();
 }
 
 void cduck_db_close ()
@@ -149,11 +165,10 @@ int cduck_db_fetch_statistics ( const char* ip, time_t minimum, cduck_db_host_st
 	return rc;
 }
 
-static char __db_groups[2048][16];
-
 const char** cduck_db_get_group ( const char* group )
 {
 	int i = 0;
+	int n;
 	sqlite3_stmt* statement;
 	sqlite3_prepare_v2(db, "SELECT ip FROM groups WHERE name = ?1", -1, &statement, NULL);
 	sqlite3_bind_text(statement, 1, group, strlen(group), SQLITE_STATIC);
@@ -162,8 +177,17 @@ const char** cduck_db_get_group ( const char* group )
 		strcpy(__db_groups[i], (const char*)sqlite3_column_text(statement, 1));
 		i++;
 	}
-	__db_groups[i][0] = '\0';
+	if (i == 0)
+	{
+		strcpy(__db_groups[0], group);
+		__db_groups[1][0] = 0;
+	}
+	else
+	{
+		__db_groups[i][0] = '\0';
+	}
 	sqlite3_finalize(statement);
+	return (const char**)__db_groups;
 }
 
 const char** cduck_db_select_horsepower ( const char* group, int n )
@@ -179,4 +203,5 @@ const char** cduck_db_select_horsepower ( const char* group, int n )
 	}
 	__db_groups[i][0] = '\0';
 	sqlite3_finalize(statement);
+	return (const char**)__db_groups;
 }

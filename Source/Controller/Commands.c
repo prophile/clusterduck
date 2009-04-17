@@ -1,6 +1,7 @@
 #include "Commands.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static cduck_command* command_ring = NULL;
 
@@ -13,6 +14,7 @@ void cduck_register_command ( const cduck_command* command )
 	cduck_command* temp_next;
 	dupe->udata = command->udata;
 	dupe->name = strdup(command->name);
+	dupe->tooltip = strdup(command->tooltip);
 	dupe->hash = hash(dupe->name, strlen(dupe->name));
 	dupe->id = command->id;
 	dupe->handler = command->handler;
@@ -32,9 +34,10 @@ void cduck_register_command ( const cduck_command* command )
 int cduck_dispatch_command ( const char* name, int argc, const char** argv )
 {
 	unsigned int nameHash;
-	unsigned int firstHash = command_ring->hash;
-	nameHash = hash(name, strlen(name));
+	unsigned int firstHash;
 	if (!command_ring) return 1;
+	nameHash = hash(name, strlen(name));
+	firstHash = command_ring->hash;
 	do
 	{
 		if (nameHash == command_ring->hash)
@@ -47,12 +50,24 @@ int cduck_dispatch_command ( const char* name, int argc, const char** argv )
 	return 1;
 }
 
-static void __command_nop ( const cduck_command* command, int argc, const char** argv )
+void cduck_command_print_usage ()
+{
+	unsigned int firstHash;
+	if (!command_ring) return;
+	firstHash = command_ring->hash;
+	do
+	{
+		printf("\t%s - %s\n", command_ring->name, command_ring->tooltip);
+		command_ring = command_ring->next;
+	} while (command_ring->hash != firstHash);
+}
+
+static void command_nop ( const cduck_command* command, int argc, const char** argv )
 {
 	// do nothing
 }
 
-CDUCK_REGISTER_COMMAND_STATIC(nop, 0x0000, __command_nop, 0);
+CDUCK_REGISTER_COMMAND_STATIC(nop, 0x0000, command_nop, 0, "does nothing");
 
 static unsigned int hash (const char* str, unsigned int len)
 {

@@ -28,7 +28,7 @@ static void load_key_if_needed ()
 			fprintf(stderr, "Failed to load IV from /etc/cduck.key\n");
 			exit(1);
 		}
-		if (!fclose(fp))
+		if (fclose(fp))
 		{
 			fprintf(stderr, "Failed to close /etc/cduck.key\n");
 			exit(1);

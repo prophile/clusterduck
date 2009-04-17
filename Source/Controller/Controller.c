@@ -7,7 +7,7 @@ static void print_usage_and_exit ( const char* invocation )
 {
 	printf("Usage: %s [command] [arguments]\n", invocation);
 	printf("Available commands:\n");
-	printf("\tnop - does nothing\n");
+	cduck_command_print_usage();
 	printf("\n");
 	exit(0);
 }
