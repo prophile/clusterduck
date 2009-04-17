@@ -1,0 +1,18 @@
+const char* cduck_db_schema =
+"CREATE TABLE hosts"
+"("
+"ip CHAR(16) NOT NULL,"
+"stat_time INTEGER NOT NULL DEFAULT 0,"
+"cpu_count INTEGER NOT NULL DEFAULT 0,"
+"cpu_power REAL NOT NULL DEFAULT 0.0,"
+"cpu_usage REAL NOT NULL DEFAULT 0.0,"
+"available_ram INTEGER NOT NULL DEFAULT 0,"
+"used_ram INTEGER NOT NULL DEFAULT 0,"
+"PRIMARY KEY (ip) ON CONFLICT IGNORE"
+");"
+"CREATE TABLE groups"
+"("
+"ip CHAR(16) NOT NULL,"
+"name CHAR(64) NOT NULL,"
+"PRIMARY KEY (ip, name) ON CONFLICT IGNORE"
+");";
