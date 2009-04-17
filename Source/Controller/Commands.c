@@ -29,21 +29,22 @@ void cduck_register_command ( const cduck_command* command )
 	}
 }
 
-void cduck_dispatch_command ( const char* name, int argc, const char** argv )
+int cduck_dispatch_command ( const char* name, int argc, const char** argv )
 {
 	unsigned int nameHash;
 	unsigned int firstHash = command_ring->hash;
 	nameHash = hash(name, strlen(name));
-	if (!command_ring) return;
+	if (!command_ring) return 1;
 	do
 	{
 		if (nameHash == command_ring->hash)
 		{
 			command_ring->handler(command_ring, argc, argv);
-			return;
+			return 0;
 		}
 		command_ring = command_ring->next;
 	} while(command_ring->hash != firstHash);
+	return 1;
 }
 
 static void __command_nop ( const cduck_command* command, int argc, const char** argv )

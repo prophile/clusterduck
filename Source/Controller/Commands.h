@@ -17,7 +17,7 @@ struct _cduck_command
 };
 
 void cduck_register_command ( const cduck_command* command );
-void cduck_dispatch_command ( const char* name, int argc, const char** argv );
+int cduck_dispatch_command ( const char* name, int argc, const char** argv );
 
 #define CDUCK_REGISTER_COMMAND_STATIC(name, id, handler, udata) void __cduck_command_register_##name () __attribute__((constructor)); \
 void __cduck_command_register_##name () { struct _cduck_command cmd = { udata, #name, id, handler, 0, 0 }; cduck_register_command(&cmd); }

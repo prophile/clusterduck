@@ -1,9 +1,12 @@
+#include "Message.h"
 #include "Shared/Encrypt.h"
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <arpa/inet.h>
+#include <string.h>
 
 static void send_packet ( int socket, unsigned short msgid, const void* data, unsigned int dlen )
 {
@@ -13,7 +16,7 @@ static void send_packet ( int socket, unsigned short msgid, const void* data, un
 	memcpy(newblock + 2, data, dlen);
 	msgid = htons(msgid);
 	memcpy(newblock, &msgid, 2);
-	newblock2 = cduck_encrypt(newblock, len + 2, &newblock2len);
+	newblock2 = cduck_encrypt(newblock, dlen + 2, &newblock2len);
 	write(socket, newblock2, newblock2len);
 	free(newblock2);
 	free(newblock);
@@ -67,8 +70,8 @@ static void* wait_poll ( void* udata )
 	blocking_read(wpd->fd, wpd->shouldExit, &length1, 4);
 	length1 = ntohl(length1);
 	tempData = malloc(length1);
-	blocking_read(wpd->fd, tempData, length1);
-	finalData = cduck_decrypt(tempData, wpd->shouldExit, length1, &length2);
+	blocking_read(wpd->fd, wpd->shouldExit, tempData, length1);
+	finalData = cduck_decrypt(tempData, length1, &length2);
 	if (wpd->callback)
 		wpd->callback(wpd->udata, finalData, length2);
 	free(finalData);
@@ -84,7 +87,7 @@ void cduck_message ( const char* host, unsigned short msgid, const void* data, u
 	struct sockaddr_in addr;
 	pthread_t thread;
 	fd = socket(AF_INET, SOCK_STREAM, 0);
-	addr.sin_len = sizeof(local_addr);
+	addr.sin_len = sizeof(addr);
 	addr.sin_family = AF_INET;
 	addr.sin_port = 0;
 	addr.sin_addr.s_addr = INADDR_ANY;
