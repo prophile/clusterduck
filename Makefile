@@ -1,7 +1,7 @@
 COMPILE_FLAGS=-pipe -O3 -emit-llvm -ISource
-LINK_FLAGS=-pipe -O3
+LINK_FLAGS=-strip-all -native -debug-pass=Arguments
 COMPILER=clang
-LINKER=clang
+LINKER=llvm-ld
 
 .PHONY : all clean
 
@@ -10,11 +10,12 @@ all: Products/cduck-keygen Products/cduck Products/cduckd
 
 clean:
 	find Objects -name "*.bc" | xargs rm -f
+	rm -f Products/*
 
 Products/cduck-keygen: Objects/KeyGen/KeyGen.bc
 	$(LINKER) $(LINK_FLAGS) -o $@ $^
 
-Products/cduck: Objects/Controller/Database.bc Objects/Controller/DatabaseSchema.bc Objects/Controller/Message.bc Objects/Controller/Commands.bc Objects/Controller/Controller.bc Objects/Shared/Encrypt.bc Objects/Controller/StatCommands.bc Objects/Controller/ShellCommands.bc Objects/Controller/GroupCommands.bc
+Products/cduck: Objects/Controller/Database.bc Objects/Controller/DatabaseSchema.bc Objects/Controller/Message.bc Objects/Controller/Commands.bc Objects/Controller/Controller.bc Objects/Shared/Encrypt.bc Objects/Controller/StatCommands.bc Objects/Controller/ShellCommands.bc Objects/Controller/GroupCommands.bc Objects/Controller/PackageCommands.bc
 	$(LINKER) $(LINK_FLAGS) -lcrypto -lsqlite3 -o $@ $^
 
 Products/cduckd: Objects/Daemon/Daemon.bc Objects/Shared/Encrypt.bc
@@ -45,6 +46,9 @@ Objects/Controller/ShellCommands.bc: Source/Controller/ShellCommands.c Source/Co
 	$(COMPILER) $(COMPILE_FLAGS) -c -o $@ $<
 
 Objects/Controller/GroupCommands.bc: Source/Controller/GroupCommands.c Source/Controller/Message.h Source/Controller/Commands.h Source/Controller/Database.h
+	$(COMPILER) $(COMPILE_FLAGS) -c -o $@ $<
+
+Objects/Controller/PackageCommands.bc: Source/Controller/PackageCommands.c Source/Controller/Message.h Source/Controller/Commands.h Source/Controller/Database.h
 	$(COMPILER) $(COMPILE_FLAGS) -c -o $@ $<
 
 Objects/Daemon/Daemon.bc: Source/Daemon/Daemon.c Source/Shared/Encrypt.h

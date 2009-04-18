@@ -26,6 +26,7 @@ void cduck_db_update_statistics ( const char* ip, time_t update_time, const cduc
 int cduck_db_fetch_statistics ( const char* ip, time_t minimum, cduck_db_host_stats* statistics );
 
 const char** cduck_db_get_group ( const char* group );
+const char** cduck_db_select_random ( const char* group, int n );
 const char** cduck_db_select_horsepower ( const char* group, int n );
 const char** cduck_db_select_memory ( const char* group, int n );
 const char** cduck_db_select_generic ( const char* group, int n );
