@@ -21,7 +21,7 @@ static void initgroups ()
 	int i;
 	for (i = 0; i < DB_MAX_GROUP_COUNT; i++)
 	{
-		__db_groups[i] = malloc(16);
+		__db_groups[i] = malloc(32);
 	}
 }
 
@@ -151,11 +151,11 @@ int cduck_db_fetch_statistics ( const char* ip, time_t minimum, cduck_db_host_st
 	if (sqlite3_step(statement) == SQLITE_ROW)
 	{
 		rc = 0;
-		statistics->cpu_count = sqlite3_column_int64(statement, 1);
-		statistics->cpu_power = sqlite3_column_double(statement, 2);
-		statistics->cpu_usage = sqlite3_column_double(statement, 3);
-		statistics->available_ram = sqlite3_column_int64(statement, 4);
-		statistics->used_ram = sqlite3_column_int64(statement, 5);
+		statistics->cpu_count = sqlite3_column_int64(statement, 0);
+		statistics->cpu_power = sqlite3_column_double(statement, 1);
+		statistics->cpu_usage = sqlite3_column_double(statement, 2);
+		statistics->available_ram = sqlite3_column_int64(statement, 3);
+		statistics->used_ram = sqlite3_column_int64(statement, 4);
 	}
 	else
 	{
@@ -169,12 +169,14 @@ const char** cduck_db_get_group ( const char* group )
 {
 	int i = 0;
 	int n;
+	const char* text;
 	sqlite3_stmt* statement;
 	sqlite3_prepare_v2(db, "SELECT ip FROM groups WHERE name = ?1", -1, &statement, NULL);
 	sqlite3_bind_text(statement, 1, group, strlen(group), SQLITE_STATIC);
 	while (sqlite3_step(statement) == SQLITE_ROW)
 	{
-		strcpy(__db_groups[i], (const char*)sqlite3_column_text(statement, 1));
+		text = (const char*)sqlite3_column_text(statement, 0);
+		strcpy(__db_groups[i], text ? text : "NULL");
 		i++;
 	}
 	if (i == 0)
@@ -198,7 +200,7 @@ const char** cduck_db_select_horsepower ( const char* group, int n )
 	sqlite3_bind_text(statement, 1, group, strlen(group), SQLITE_STATIC);
 	while (i < n && sqlite3_step(statement) == SQLITE_ROW)
 	{
-		strcpy(__db_groups[i], (const char*)sqlite3_column_text(statement, 1));
+		strcpy(__db_groups[i], (const char*)sqlite3_column_text(statement, 0));
 		i++;
 	}
 	__db_groups[i][0] = '\0';

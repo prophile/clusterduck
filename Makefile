@@ -1,12 +1,21 @@
-COMPILE_FLAGS=-pipe -O3 -emit-llvm -ISource
-LINK_FLAGS=-strip-all -native -debug-pass=Arguments
-COMPILER=clang
-LINKER=llvm-ld
+# Release options
+#COMPILE_FLAGS=-pipe -O3 -emit-llvm -ISource
+#LINK_FLAGS=-strip-all -native
+#COMPILER=clang
+#LINKER=llvm-ld
+#WRAPUP=strip Products/* 2>/dev/null
+
+# Debug options
+COMPILE_FLAGS=-pipe -O0 -gfull -ISource
+LINK_FLAGS=
+COMPILER=gcc
+LINKER=gcc
+WRAPUP=
 
 .PHONY : all clean
 
 all: Products/cduck-keygen Products/cduck Products/cduckd
-	true
+	$(WRAPUP)
 
 clean:
 	find Objects -name "*.bc" | xargs rm -f

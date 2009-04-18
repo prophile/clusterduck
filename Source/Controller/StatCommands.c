@@ -22,7 +22,7 @@ static void command_stat ( const cduck_command* command, int argc, const char** 
 	const char** ips;
 	int i, j;
 	cduck_db_open();
-	for (int i = 0; i < argc; i++)
+	for (i = 0; i < argc; i++)
 	{
 		j = 0;
 		ips = cduck_db_get_group(argv[i]);
