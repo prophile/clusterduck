@@ -7,6 +7,7 @@
 #include <poll.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <assert.h>
 
 static void send_packet ( int socket, unsigned short msgid, const void* data, unsigned int dlen )
 {
@@ -82,7 +83,7 @@ static void* wait_poll ( void* udata )
 
 void cduck_message ( const char* host, unsigned short msgid, const void* data, unsigned int dlen, cduck_message_callback callback, void* udata, _Bool synchronous )
 {
-	int fd;
+	int fd, rc;
 	struct _wait_poll_data* wpd;
 	struct sockaddr_in addr;
 	pthread_t thread;
@@ -91,10 +92,12 @@ void cduck_message ( const char* host, unsigned short msgid, const void* data, u
 	addr.sin_family = AF_INET;
 	addr.sin_port = 0;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+	rc = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+	assert(rc == 0);
 	addr.sin_port = htons(33940);
 	addr.sin_addr.s_addr = inet_addr(host);
-	connect(fd, (struct sockaddr*)&addr, sizeof(addr));
+	rc = connect(fd, (struct sockaddr*)&addr, sizeof(addr));
+	assert(rc == 0);
 	send_packet(fd, msgid, data, dlen);
 	wpd = malloc(sizeof(*wpd));
 	wpd->fd = fd;

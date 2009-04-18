@@ -44,7 +44,7 @@ static void command_shell ( const cduck_command* command, int argc, const char**
 	while (ips[i][0] != 0)
 	{
 		printf("Sending SHELL to client %s\n", ips[i]);
-		cduck_message(ips[i], command->id, shell_command, chidx, NULL, NULL, 0);
+		cduck_message(ips[i], command->id, shell_command, chidx, NULL, NULL, 1);
 		i++;
 	}
 	cduck_db_close();

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include "Shared/Encrypt.h"
+#include "Dispatcher.h"
 
 static void make_daemon ()
 {
@@ -68,11 +69,25 @@ static void blocking_read ( int fd, jmp_buf* jumpTarget, void* data, size_t len 
 	}
 }
 
+static void* handle_packet ( const void* source, unsigned int len, unsigned int* outlen )
+{
+	const unsigned char* cbuf;
+	unsigned short msgid;
+	cbuf = (const unsigned char*)source;
+	memcpy(&msgid, cbuf, 2);
+	cbuf += 2;
+	msgid = ntohs(msgid);
+	printf("Dispatching message 0x%04hX\n", msgid);
+	return cduck_dispatch(msgid, cbuf, len - 2, outlen);
+}
+
 static void* socket_handle ( void* udata )
 {
 	jmp_buf storageBuf;
 	void* rawData = NULL;
 	void* unencryptedData = NULL;
+	void* resultData = NULL;
+	void* encryptedResultData = NULL;
 	unsigned int packetLen;
 	struct _socket_handle_data* hdata = (struct _socket_handle_data*)udata;
 	if (!setjmp(storageBuf))
@@ -87,11 +102,18 @@ static void* socket_handle ( void* udata )
 		free(rawData);
 		rawData = NULL;
 		// handle the data here
+		resultData = handle_packet(unencryptedData, packetLen, &packetLen);
+		encryptedResultData = cduck_encrypt(resultData, packetLen, &packetLen);
+		write(hdata->fd, encryptedResultData, packetLen);
 	}
 	if (rawData)
 		free(rawData);
 	if (unencryptedData)
 		free(unencryptedData);
+	if (resultData)
+		free(resultData);
+	if (encryptedResultData)
+		free(encryptedResultData);
 	close(hdata->fd);
 	free(udata);
 	return NULL;
@@ -105,7 +127,13 @@ int main ( int argc, char** argv )
 	pthread_t ptt;
 	struct sockaddr_in local_addr;
 	// make us a daemon process
-	make_daemon();
+	if (argc > 1 && !strcmp(argv[1], "--foreground"))
+	{
+	}
+	else
+	{
+		make_daemon();
+	}
 	// set up listener socket
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	// bind
@@ -130,6 +158,7 @@ int main ( int argc, char** argv )
 			// create the new handle, fill it with data
 			handle = malloc(sizeof(struct _socket_handle_data));
 			handle->fd = accept(sock, (struct sockaddr*)&(handle->remote_address), &(handle->remote_address_len));
+			printf("Handling new connection, fd=%d\n", handle->fd);
 			// set SO_LINGER
 			setsockopt(handle->fd, 6, SO_LINGER, &one, sizeof(one));
 			// dispatch in another thread
